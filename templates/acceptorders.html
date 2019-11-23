@@ -69,14 +69,9 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <!--h6>the most interesting food in the world</h6>
-                    <h1>Discover the <span class="prime-color">flavors</span><br>  
-                    <span class="style-change">of <span class="prime-color">food</span>fun</span></h1-->
-                    <a href="http://localhost:5000/addfooditems/{{ admin_id }}" title="Button push blue/green" class="button btnPush btnBlueGreen">Add Food Items</a><br>
-                    <a href="http://localhost:5000/deletefooditems/{{ admin_id }}" title="Button push blue/green" class="button btnPush btnBlueGreen">Delete Food Items</a><br>
-                    <a href="http://localhost:5000/addfoodcombos/{{ admin_id }}" title="Button push blue/green" class="button btnPush btnBlueGreen">Add Food Combos</a><br>
-                    <a href="http://localhost:5000/deletefoodcombos/{{ admin_id }}" title="Button push blue/green" class="button btnPush btnBlueGreen">Delete Food Combos</a><br>
-                    <a href="http://localhost:5000/acceptorders/{{ admin_id }}" title="Button push blue/green" class="button btnPush btnBlueGreen">Accept Orders</a>
+                    <h1><span class="prime-color">Orders</span></h1>
+                    <h6><span id='datin'></span></h6>
+                    
                 </div>
             </div>
         </div>
@@ -409,7 +404,7 @@
                             <div class="input-group-prepend">
                               <span class="input-group-text"><i class="fa fa-user-o"></i></span>
                             </div>
-                            <input type="text">
+                            <input type="acceptorders/text">
                         </div>
                         <div class="table-btn text-center">
                             <a href="#" class="template-btn template-btn2 mt-4">book a table</a>
@@ -419,9 +414,6 @@
             </div>
         </div>
     </section-->
-    <!-- Table Area End -->
-
-
     <!-- Footer Area Starts -->
     <footer class="footer-area">
         <!--div class="footer-widget section-padding">
@@ -509,5 +501,20 @@ Copyright &copy;<script>document.write(new Date().getFullYear());</script> All r
     <script src="{{ url_for('static', filename='assets/js/vendor/jquery.datetimepicker.full.min.js') }}"></script>
     <script src="{{ url_for('static', filename='assets/js/vendor/jquery.nice-select.min.js') }}"></script>
     <script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
+    <script>
+            var admin_id = "{{ admin_id }}";
+            console.log(admin_id);
+            var recv=function(e){
+                console.log("called")
+                datin.innerHTML+=e.data+"<br />";
+            }
+        
+            $(document).ready(function(){
+                var sse=new EventSource("admin_sse/admin1");
+                sse.onmessage=recv;
+                sse.onopen=function(){console.log("started")}
+                sse.onerror=function(){console.log("error")}
+            });
+        </script>
 </body>
 </html>

@@ -1,6 +1,9 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request,Response
 import json
 import sqlite3
+from threading import Lock
+
+admin_dict=dict()
 
 app = Flask(__name__)
 
@@ -93,7 +96,7 @@ def verify_user():
                     data[i[2]] = list(i[:2])
                 else:
                     data[i[2]][0] = data[i[2]][0] + ',' + i[0]'''
-            return render_template('user.html', menu=menu)
+            return render_template('user.html', menu=menu, user_id=request.form['id'])
         else:
             cur.close()
             return render_template('login.html', type='user')
@@ -102,8 +105,8 @@ def verify_user():
         cur.close()
         return render_template('login.html', type='user')
 
-@app.route('/get_menu/<canteen>')
-def get_menu(canteen):
+@app.route('/get_menu/<canteen>/<user_id>')
+def get_menu(canteen, user_id):
     con = sqlite3.connect('Database/Canteen.db')
     cur = con.cursor()
     query = 'select item_id, food, price from Menu where admin_id = ?;'
@@ -115,11 +118,21 @@ def get_menu(canteen):
         return json.dumps('failed')#render_template()
     menu = cur.fetchall()
     con.close()
-    return render_template('display_menu.html', menu=menu, admin_id=canteen)
+    return render_template('display_menu.html', menu=menu, admin_id=canteen, user_id=user_id)
 
-@app.route('/place_order')
+@app.route('/place_order',methods=["POST"])
 def place_order():
-    con = sqlite3.connect('Database/Canteen.db')
+    print(request.form)
+    admin_id=request.form["admin_id"]
+    food_items=list(request.form)
+    print(food_items)
+    user_id=request.form["user_id"]
+    food_items=food_items[:-2]
+    if admin_id not in admin_dict:return json.dumps('failed')
+    lock,olist=admin_dict[admin_id]
+    for i in food_items:olist.append([user_id,i])
+    lock.release()
+    return json.dumps("success")   
 
 @app.route('/add_to_cart', methods=["POST"])
 def add_to_cart():
@@ -277,13 +290,50 @@ def delete_combos():
 
 @app.route('/acceptorders/<admin_id>')
 def acceptorders(admin_id):
-    return render_template('acceptorders.html')
+    return render_template('acceptorders.html', admin_id = admin_id)
 
 
 
+#server_sent_events assuming GET
+def runget(lock,order_list):
+    yield "data flow started\n\n"
+    while True:
+        lock.acquire(1)
+        to_send=order_list.copy()
+        order_list.clear()
+        print("sent2"+json.dumps(to_send))
+        yield 'data: '+json.dumps(to_send)+'\n\n'
+        #yield 'data:"soehng"\n\n'
 
 
+@app.route('/acceptorders/admin_sse/<admin_id>')
+def admin_sse(admin_id):
+    print("called admin_sse")
+    print(admin_dict, admin_id)
+    if admin_id not in admin_dict:
+        print('failed')
+        return json.dumps('failed')
+    lock,order_list=admin_dict[admin_id]
+    print(admin_dict)
+    print("my",order_list)
+    return Response(runget(lock,order_list), mimetype="text/event-stream")
+
+ 
+##sse_debug page
+@app.route('/admin_recv_dbg.html')
+def admin_debug():
+    return render_template("admin_recv.html")
 
 
 if __name__ == '__main__':
+
+    con = sqlite3.connect('Database/Canteen.db')
+    admin_list=con.execute("select admin_id from Admin;").fetchall()
+    con.close()
+    for i in admin_list:
+        mutex=Lock()
+        mutex.acquire(1)
+        admin_dict[i[0]]=[mutex,[]]         #lock,order_list
+
+
     app.run(host = 'localhost', debug = True)

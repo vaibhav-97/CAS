@@ -78,7 +78,7 @@
                     <h1>Please select <span class="prime-color">one</span><br>  
                     <span class="style-change">of <span class="prime-color">the </span>Canteen</span></h1>
                     {% for val in menu %}
-                    <a href="http://localhost:5000/get_menu/{{ val[0] }}" title="Button push blue/green" class="button btnPush btnBlueGreen">{{ val[0] }}</a>
+                    <a href="http://localhost:5000/get_menu/{{ val[0] }}/{{ user_id }}" title="Button push blue/green" class="button btnPush btnBlueGreen">{{ val[0] }}</a>
                     {% endfor %}
                 </div>
             </div>

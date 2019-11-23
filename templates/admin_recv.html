@@ -1,0 +1,20 @@
+<html>
+<head></head>
+<body>
+    <p id="datin"> </p>
+    <button id="strt"> start </button>
+</body>
+<script>
+    admin_id="admin1";
+    var recv=function(e){
+        datin.innerHTML+=e.data+"<br />";
+    }
+
+    strt.onclick=function(){
+        var sse=new EventSource("acceptorders/admin_sse/admin1");
+        sse.onmessage=recv;
+        sse.onopen=function(){console.log("started")}
+        sse.onerror=function(){console.log("error")}
+    }
+</script>
+</html>
